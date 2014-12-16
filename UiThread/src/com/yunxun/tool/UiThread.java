@@ -21,7 +21,7 @@ public class UiThread {
 	private long callbackDelayMills;//回调前延时
 	private Dialog dialog;
 	private UIThreadEvent event;
-	private UIpublisher publisher;
+	private UIpublisher publisher; 
 	private Object back;
 	private Context context;
 	
