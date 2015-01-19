@@ -166,7 +166,7 @@ public class MainActivity extends Activity implements OnClickListener, UIThreadE
 	
 
 	@Override
-	public Object runInThread(Publisher publisher, String flag) {
+    public Object runInThread(String flag, Object obj, UiThread.Publisher publisher) {
 		if (flag.equals("nor")) {
 			for (int i = 0; i < 10; i++) {
 				try {

@@ -12,10 +12,12 @@ import android.os.Looper;
 import android.os.Message;
 
 public class UiThread {
+	private static Context mainContext;
 	private static Handler mainHandler;
 	private static ExecutorService pool;
 	private static final int MAXTHREADCOUNT = 5;//最大执行线程数量
 	
+	private Object obj;//运行时需要的obj
 	private String flag = "";//防止null
 	private long runDelayMillis;//运行前延迟
 	private long callbackDelayMills;//回调前延时
@@ -26,7 +28,7 @@ public class UiThread {
 	private Context context;
 	
 	public interface UIThreadEvent {
-		public Object runInThread(Publisher publisher,String flag);
+		public Object runInThread(String flag,Object obj,Publisher publisher);
 		public void runInUi(String flag,Object obj,boolean ispublish,float progress);
 	}
 	
@@ -38,7 +40,7 @@ public class UiThread {
 	public class PublishData  {
 		Object obj;
 		float progress;
-		UiThread uithread;
+		UiThread uithread; 
 	}
 	
 	public static UiThread init (Context content) {
@@ -80,7 +82,9 @@ public class UiThread {
 	
 	public UiThread (Activity activity) {
 		this.context = activity;
-		if (mainHandler==null) {
+		if (mainHandler==null || mainContext != context) {
+			mainContext = context;
+			
 			if (Looper.myLooper() != Looper.getMainLooper()) {
 				throw new InternalError("uiThread cannot init from thread!");
 			}
@@ -116,7 +120,7 @@ public class UiThread {
 						
 						if (data.uithread.dialog instanceof ProgressDialog) {
 							//如果设置显示了ProgressDialog,自动更新dialog的进度
-							if (dialog.isShowing() && data.progress > 0 && data.progress < 100) {
+							if (data.uithread.dialog.isShowing() && data.progress > 0 && data.progress < 100) {
 								((ProgressDialog)data.uithread.dialog).setMessage(data.progress + "%");								
 							}
 						}
@@ -139,6 +143,11 @@ public class UiThread {
 	
 	public UiThread setFlag (String flag) {
 		this.flag = flag;
+		return this;
+	}
+	
+	public UiThread setObject (Object obj) {
+		this.obj = obj;
 		return this;
 	}
 	
@@ -194,7 +203,7 @@ public class UiThread {
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				UiThread.this.back = UiThread.this.event.runInThread(UiThread.this.publisher,flag);
+				UiThread.this.back = UiThread.this.event.runInThread(flag,obj,publisher);
 				Message msg = Message.obtain();
 				msg.obj = UiThread.this;
 				mainHandler.sendMessageDelayed(msg, callbackDelayMills);
